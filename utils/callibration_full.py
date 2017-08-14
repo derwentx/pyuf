@@ -31,6 +31,7 @@ logger_init(logging.INFO)
 def main():
     print('setup swift ...')
     swift = SwiftAPI()
+    sleep(2)
 
     print('device info: ')
     device_info = swift.get_device_info()
