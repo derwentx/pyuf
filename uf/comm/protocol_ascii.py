@@ -83,7 +83,6 @@ class ProtocolAscii():
             else:
                 pass # warning...
         elif msg[0:2] == 'ok' and len(self.cmd_pend) == 1:
-            index = 0
             cnt = list(self.cmd_pend)[0]
             self.cmd_pend[cnt].finish(msg)
 
