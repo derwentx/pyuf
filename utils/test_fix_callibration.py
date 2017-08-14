@@ -15,7 +15,6 @@ from time import sleep
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from __init__ import SERIAL_PORT
 from uf.wrapper.swift_api import SwiftAPI
 from uf.utils.log import logger_init, logging
 
@@ -26,7 +25,7 @@ logger_init(logging.INFO)
 def main():
     print('setup swift ...')
 
-    swift = SwiftAPI(dev_port=SERIAL_PORT)
+    swift = SwiftAPI()
 
     print('sleep 2 sec ...')
     sleep(2)

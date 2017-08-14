@@ -16,7 +16,6 @@ from collections import OrderedDict
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from __init__ import SERIAL_PORT
 from uf.wrapper.swift_api import SwiftAPI
 from uf.utils.log import logger_init, logging
 
@@ -33,7 +32,7 @@ def send_cmd_sync_ok(swift, command):
 def main():
     print('setup swift ...')
 
-    swift = SwiftAPI(dev_port=SERIAL_PORT)
+    swift = SwiftAPI()
 
     print('sleep 2 sec ...')
     sleep(2)
@@ -49,21 +48,21 @@ def main():
     #
     # reference_angle_value[X_AXIS] = getE2PROMData(EEPROM_ON_CHIP, EEPROM_REFERENCE_VALUE_ADDR, DATA_TYPE_INTEGER);
 	# reference_angle_value[Y_AXIS] = getE2PROMData(EEPROM_ON_CHIP, EEPROM_REFERENCE_VALUE_ADDR+2, DATA_TYPE_INTEGER);
-	# reference_angle_value[Z_AXIS] = getE2PROMData(EEPROM_ON_CHIP, EEPROM_REFERENCE_VALUE_ADDR+4, DATA_TYPE_INTEGER);	
+	# reference_angle_value[Z_AXIS] = getE2PROMData(EEPROM_ON_CHIP, EEPROM_REFERENCE_VALUE_ADDR+4, DATA_TYPE_INTEGER);
     reference_angle_value = []
     reference_angle_value.append(send_cmd_sync_ok(swift, 'M2211 N0 A800 T2'))
     reference_angle_value.append(send_cmd_sync_ok(swift, 'M2211 N0 A802 T2'))
     reference_angle_value.append(send_cmd_sync_ok(swift, 'M2211 N0 A804 T2'))
     print(reference_angle_value)
-    
+
     print("-> height offset:")
-    
+
     # define EEPROM_HEIGHT_ADDR	    910
     # define DATA_TYPE_FLOAT        4
     # getE2PROMData(EEPROM_ON_CHIP, EEPROM_HEIGHT_ADDR, DATA_TYPE_FLOAT);
     height_offset = send_cmd_sync_ok(swift, "M2211 N0 A910 T4")
     print(height_offset)
-    
+
     print("-> front offset:")
     # define EEPROM_FRONT_ADDR      920
     # getE2PROMData(EEPROM_ON_CHIP, EEPROM_FRONT_ADDR, DATA_TYPE_FLOAT);
@@ -76,7 +75,7 @@ def main():
     swift.set_servo_detach(2, wait=True)
     sleep(1)
     swift.set_servo_detach(1, wait=True)
-    
+
     print("now you can position the arm on the X-Z plane (rotation locked at zero)")
 
     while True:

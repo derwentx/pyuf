@@ -7,14 +7,11 @@
 # Author: Duke Fong <duke@ufactory.cc>
 
 
-# import _thread, threading
-# import serial
 import sys, os
 from time import sleep
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
 
-from __init__ import SERIAL_PORT
 from uf.ufc import ufc_init
 from uf.swift import Swift
 from uf.utils.log import logger_init, logging
@@ -26,13 +23,15 @@ logger_init(logging.INFO)
 print('setup swift ...')
 
 swift_iomap = {
-        'pos_in': '/swift_pos_in',
-        'pos_out': '/swift_pos_out',
-        'service': '/swift_service'
+        'pos_in':  'swift_pos_in',
+        'pos_out': 'swift_pos_out',
+        'service': 'swift_service'
 }
 
 ufc = ufc_init()
-swift = Swift(ufc, 'swift', swift_iomap, dev_port = SERIAL_PORT, baud = 115200)
+#swift = Swift(ufc, 'swift', swift_iomap, dev_port = '/dev/ttyACM0')
+#swift = Swift(ufc, 'swift', swift_iomap, filters = {'hwid': 'USB VID:PID=2341:0042'})
+swift = Swift(ufc, 'swift', swift_iomap) # default by filters: {'hwid': 'USB VID:PID=2341:0042'}
 
 
 print('setup test ...')
@@ -41,15 +40,15 @@ def pos_cb(msg):
     print('pos_cb: ' + msg)
 
 test_ports = {
-        'swift_pos': {'dir': 'out', 'type': 'topic'},
-        'swift_pos_out': {'dir': 'in', 'type': 'topic', 'callback': pos_cb},
+        'swift_pos':     {'dir': 'out', 'type': 'topic'},
+        'swift_pos_out': {'dir': 'in',  'type': 'topic', 'callback': pos_cb},
         'swift_service': {'dir': 'out', 'type': 'service'}
 }
 
 test_iomap = {
-        'swift_pos': '/swift_pos_in',
-        'swift_pos_out': '/swift_pos_out',
-        'swift_service': '/swift_service'
+        'swift_pos':     'swift_pos_in',
+        'swift_pos_out': 'swift_pos_out',
+        'swift_service': 'swift_service'
 }
 
 # install handle for ports which are listed in the iomap

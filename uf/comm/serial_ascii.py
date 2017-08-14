@@ -9,10 +9,12 @@
 
 import _thread, threading
 import serial
+from serial.tools import list_ports
+from ..utils.select_serial_port import select_port
 from ..utils.log import *
 
 class SerialAscii(threading.Thread):
-    def __init__(self, ufc, node, iomap, dev_port, baud):
+    def __init__(self, ufc, node, iomap, dev_port = None, baud = 115200, filters = None):
         
         self.ports = {
             'in': {'dir': 'in', 'type': 'topic', 'callback': self.in_cb},
@@ -23,6 +25,10 @@ class SerialAscii(threading.Thread):
         self.node = node
         self.logger = logging.getLogger(node)
         ufc.node_init(node, self.ports, iomap)
+        
+        dev_port = select_port(logger = self.logger, dev_port = dev_port, filters = filters)
+        if not dev_port:
+            quit(1)
         
         # TODO: maintain serial connection by service callback
         self.com = serial.Serial(port = dev_port, baudrate = baud)
