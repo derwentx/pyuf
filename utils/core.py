@@ -11,6 +11,7 @@ Functions used by utilities.
 """
 
 SIMPLE_RESPONSE_REGEX = r"ok V(?P<response>\S+)"
+TEMP_RESPONSE_REGEX = r"ok T:(?P<response>\S+)"
 
 def send_cmd_sync_ok(swift, command, response_regex=None):
     """
