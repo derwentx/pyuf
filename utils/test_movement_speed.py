@@ -7,9 +7,10 @@ from __future__ import print_function
 #
 # Author: Duke Fong <duke@ufactory.cc>
 
+"""
+This utility shows which movement speeds the uArm is capable of for diagnostics.
+"""
 
-# import _thread, threading
-# import serial
 import sys, os
 from time import sleep
 

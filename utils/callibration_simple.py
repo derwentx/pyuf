@@ -7,6 +7,11 @@ from __future__ import print_function
 #
 # Author: Duke Fong <duke@ufactory.cc>
 
+"""
+This utility fixes a common problem with the uArm where it has moved outside of
+its normal bounds and needs to be clicked back in to place.
+See this video for more info: https://www.youtube.com/watch?v=n4AJbGCsiYg
+"""
 
 # import _thread, threading
 # import serial
