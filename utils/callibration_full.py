@@ -2,13 +2,13 @@
 from __future__ import print_function
 
 import os
-import re
 import sys
 from collections import OrderedDict
 from time import sleep
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
+from utils.core import send_cmd_sync_ok, SIMPLE_RESPONSE_REGEX
 from uf.utils.log import logger_init, logging
 from uf.wrapper.swift_api import SwiftAPI
 
@@ -24,40 +24,13 @@ This utility prints EEPROM values used to callibrate the uArm's reverse kinemati
 Is compatible with firmware version
 """
 
-
-#logger_init(logging.VERBOSE)
-logger_init(logging.DEBUG)
-# logger_init(logging.INFO)
-
-SIMPLE_RESPONSE_REGEX = r"ok V(?P<response>\S+)"
-
-def send_cmd_sync_ok(swift, command, response_regex=None):
-    """
-    Send a command and wait for it to complete. Optionally parse the response.
-    """
-    logging.debug("sending command \"%s\"" % command)
-    response = swift.send_cmd_sync(command)
-    logging.debug("command response \"%s\"" % response)
-    if not response.startswith("ok"):
-        raise RuntimeError("command \"%s\" failed: %s" % (command, response))
-    if response_regex:
-        response_match = re.search(response_regex, response)
-        if response_match and 'response' in response_match.groupdict():
-            response = response_match.groupdict()['response']
-        else:
-            raise ValueError(
-                "response \"%s\" for command \"%s\" did not match regex \"%s\"" %
-                (response, command, response_regex)
-            )
-    return response
+# logger_init(logging.VERBOSE)
+# logger_init(logging.DEBUG)
+logger_init(logging.INFO)
 
 def main():
     print('setup swift ...')
-
     swift = SwiftAPI()
-
-    print('sleep 2 sec ...')
-    sleep(2)
 
     print('device info: ')
     device_info = swift.get_device_info()
