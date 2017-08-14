@@ -139,7 +139,7 @@ def main():
         print(" - Press enter to get calibration data")
         print(" - Press s to set reference angle")
         if fw_has_b_angles:
-            print(" - Press b to set reference angle ")
+            print(" - Press b to set reference angle B")
         else:
             print(" - [reference angle B not supported by firmware %s]" % fw_version)
         print(" - Press h to zero height")
