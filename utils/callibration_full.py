@@ -26,16 +26,18 @@ Is compatible with firmware version
 
 
 #logger_init(logging.VERBOSE)
-#logger_init(logging.DEBUG)
-logger_init(logging.INFO)
+logger_init(logging.DEBUG)
+# logger_init(logging.INFO)
 
 SIMPLE_RESPONSE_REGEX = r"ok V(?P<response>\S+)"
-DEBUG = True
 
 def send_cmd_sync_ok(swift, command, response_regex=None):
-    if DEBUG:
-        print("sending command \"%s\"" % command)
+    """
+    Send a command and wait for it to complete. Optionally parse the response.
+    """
+    logging.debug("sending command \"%s\"" % command)
     response = swift.send_cmd_sync(command)
+    logging.debug("command response \"%s\"" % response)
     if not response.startswith("ok"):
         raise RuntimeError("command \"%s\" failed: %s" % (command, response))
     if response_regex:
@@ -178,11 +180,13 @@ def main():
         ]))
 
         if raw_in == "s":
-            print("M2401: %s" % swift.send_cmd_sync("M2401 V22765"))
+            print("M2401: %s" % send_cmd_sync_ok(swift, "M2401 V22765"))
         elif fw_has_b_angles and raw_in == "b":
-            print("M2401: %s" % swift.send_cmd_sync("M2401 B"))
+            print("M2401: %s" % send_cmd_sync_ok(swift, "M2401 B"))
         elif raw_in == "h":
-            print("M2410: %s" % swift.send_cmd_sync("M2410"))
+            print("M2410: %s" % send_cmd_sync_ok(swift, "M2410"))
+        else:
+            logging.warning("did not understand command: %s" % raw_in)
 
 
         # swift.set_buzzer()
