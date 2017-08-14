@@ -63,7 +63,7 @@ def main():
     print('firmware version:')
     fw_version = tuple(int(number) for number in device_info[2].split('.'))
     print(fw_version)
-    has_b_angles = (fw_version >= (3, 1, 16))
+    fw_has_b_angles = (fw_version >= (3, 1, 16))
 
     print('EEPROM Values: ')
     print('-> reference_angle_value:')
@@ -85,7 +85,7 @@ def main():
     # reference_angle_value[Z_AXIS] =
     #     getE2PROMData(EEPROM_ON_CHIP, EEPROM_REFERENCE_VALUE_ADDR+4, DATA_TYPE_INTEGER);
     reference_angle_flag = 0
-    if has_b_angles:
+    if fw_has_b_angles:
         reference_angle_flag = send_cmd_sync_ok(swift, 'M2211 N0 A818 T1')
     reference_angle_value = []
     reference_angle_addr = 800
@@ -136,7 +136,7 @@ def main():
         print("Make your selection:")
         print(" - Press enter to get calibration data")
         print(" - Press s to set reference angle")
-        if has_b_angles:
+        if fw_has_b_angles:
             print(" - Press b to set reference angle b")
         print(" - Press h to zero height")
         print(" - Press Ctrl-C to exit")
@@ -179,8 +179,8 @@ def main():
 
         if raw_in == "s":
             print("M2401: %s" % swift.send_cmd_sync("M2401 V22765"))
-        elif has_b_angles and raw_in == "b":
-            print("M2401: %s" % swift.send_cmd_sync("M2401 "))
+        elif fw_has_b_angles and raw_in == "b":
+            print("M2401: %s" % swift.send_cmd_sync("M2401 B"))
         elif raw_in == "h":
             print("M2410: %s" % swift.send_cmd_sync("M2410"))
 
