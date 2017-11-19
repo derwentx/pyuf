@@ -9,12 +9,13 @@
 
 import _thread, threading
 from queue import Queue
+from time import sleep
 from ..utils.log import *
 
 
 class ProtocolAscii():
-    def __init__(self, ufc, node, iomap, cmd_pend_size = 4, timeout = 30):
-
+    def __init__(self, ufc, node, iomap, cmd_pend_size = 2, timeout = 1):
+        
         self.ports = {
             'cmd_async': {'dir': 'in', 'type': 'topic', 'callback': self.cmd_async_cb},
             'cmd_sync': {'dir': 'in', 'type': 'service', 'callback': self.cmd_sync_cb},
@@ -29,7 +30,7 @@ class ProtocolAscii():
         }
 
         self.node = node
-        self.logger = logging.getLogger(node)
+        self.logger = logging.getLogger('uf.' + node.replace('/', '.'))
         self.cmd_pend = {}
         self.cmd_pend_size = cmd_pend_size
         self.cmd_pend_c = threading.Condition()
@@ -47,21 +48,23 @@ class ProtocolAscii():
             self.ret = Queue(1)
             self.timer = threading.Timer(timeout, self.timeout_cb)
             self.timer.start()
-
+        
+        def delete(self):
+            del self.owner.cmd_pend[self.cnt]
+            with self.owner.cmd_pend_c:
+                self.owner.cmd_pend_c.notifyAll()
+        
         def finish(self, msg):
             self.timer.cancel()
-            del self.owner.cmd_pend[self.cnt]
+            self.delete()
             self.ret.put(msg)
-            with self.owner.cmd_pend_c:
-                self.owner.cmd_pend_c.notify()
-
+        
         def get_ret(self):
             return self.ret.get()
-
+        
         def timeout_cb(self):
+            self.delete() # TODO: avoid KeyError if the 'finish' called at same time
             self.owner.logger.warning('cmd "#{} {}" timeout'.format(self.cnt, self.msg))
-            # TODO: avoid KeyError if the 'finish' called at same time
-            del self.owner.cmd_pend[self.cnt]
             self.ret.put('err, timeout')
 
 
@@ -82,18 +85,19 @@ class ProtocolAscii():
                 self.cmd_pend[cnt].finish(msg[index + 1:])
             else:
                 pass # warning...
-        elif msg[0:2] == 'ok' and len(self.cmd_pend) == 1:
-            cnt = list(self.cmd_pend)[0]
-            self.cmd_pend[cnt].finish(msg)
-
-
+    
     def cmd_async_cb(self, msg):
-        with self.cmd_pend_c:
-            while len(self.cmd_pend) >= self.cmd_pend_size:
-                self.cmd_pend_c.wait()
-
         with self.cnt_lock:
-            cmd = self.Cmd(self, self.cnt, msg, self.timeout)
+            with self.cmd_pend_c:
+                while len(self.cmd_pend) >= self.cmd_pend_size:
+                    self.cmd_pend_c.wait()
+            if msg.startswith('_T'):
+                tmps = msg[2:].split(' ', 1)
+                timeout = int(tmps[0])
+                msg = tmps[1]
+            else:
+                timeout = self.timeout
+            cmd = self.Cmd(self, self.cnt, msg, timeout)
             self.cmd_pend[self.cnt] = cmd
             self.ports['packet_out']['handle'].publish('#{} '.format(self.cnt) + msg)
             self.cnt += 1
@@ -106,15 +110,18 @@ class ProtocolAscii():
         return cmd.get_ret()
 
     def service_cb(self, msg):
-        words = msg.split(' ', 1)
-        action = words[0]
-
-        words = words[1].split(' ', 1)
-        param = words[0]
-
-        if param == 'flush':
-            if action == 'set':
+        msg = msg.split(' ', 2)
+        
+        if msg[1] == 'flush':
+            if msg[0] == 'set':
+                sleep(0.1)
                 with self.cmd_pend_c:
-                    while len(self.cmd_pend) != 0:
+                    while len(self.cmd_pend) != 0 or self.cnt_lock.locked():
                         self.cmd_pend_c.wait()
                 return 'ok'
+        
+        if msg[1] == 'pend':
+            if msg[0] == 'get':
+                return 'ok, pend: %d' % len(self.cmd_pend)
+
+

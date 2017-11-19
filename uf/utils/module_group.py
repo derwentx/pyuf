@@ -10,11 +10,12 @@
 class ModuleGroup():
     def __init__(self, ufc, node, iomap, **kwargs):
         self.nodes = {}
-        for n in self.__class__.sub_nodes:
+        for n in self.sub_nodes:
             args = {}
             if 'args' in n.keys():
                 for k in n['args']:
-                    args[k] = kwargs[k]
+                    if k in kwargs:
+                        args[k] = kwargs[k]
             for io in list(n['iomap']):
                 t, p = n['iomap'][io].split(': ', 1)
                 if t == 'outer':

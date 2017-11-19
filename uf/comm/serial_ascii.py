@@ -23,7 +23,7 @@ class SerialAscii(threading.Thread):
         }
         
         self.node = node
-        self.logger = logging.getLogger(node)
+        self.logger = logging.getLogger('uf.' + node.replace('/', '.'))
         ufc.node_init(node, self.ports, iomap)
         
         dev_port = select_port(logger = self.logger, dev_port = dev_port, filters = filters)
@@ -45,9 +45,9 @@ class SerialAscii(threading.Thread):
             if not line:
                 continue
             line = ''.join(map(chr, line)).rstrip()
+            self.logger.log(logging.VERBOSE, '-> ' + line)
             if self.ports['out']['handle']:
                 self.ports['out']['handle'].publish(line)
-            self.logger.log(logging.VERBOSE, '-> ' + line)
         self.com.close()
     
     def stop(self):
@@ -55,8 +55,8 @@ class SerialAscii(threading.Thread):
         self.join()
     
     def in_cb(self, message):
-        self.com.write(bytes(map(ord, message + '\n')))
         self.logger.log(logging.VERBOSE, '<- ' + message)
+        self.com.write(bytes(map(ord, message + '\n')))
     
     def service_cb(self, message):
         pass

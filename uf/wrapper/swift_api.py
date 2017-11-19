@@ -89,6 +89,9 @@ class SwiftAPI():
         }
         
         self.pos_from_dev_cb = None
+        self.limit_switch_cb = None
+        self.key0_cb = None
+        self.key1_cb = None
         self._dev_info = None
         
         self._node = 'swift_api'
@@ -102,11 +105,16 @@ class SwiftAPI():
             self.pos_from_dev_cb(values)
     
     def _limit_switch_cb(self, msg):
-        pass
+        if self.limit_switch_cb != None:
+            self.limit_switch_cb(msg == 'on')
+    
     def _key0_cb(self, msg):
-        pass
+        if self.key0_cb != None:
+            self.key0_cb(msg)
+    
     def _key1_cb(self, msg):
-        pass
+        if self.key1_cb != None:
+            self.key1_cb(msg)
     
     def reset(self):
         '''
@@ -191,7 +199,8 @@ class SwiftAPI():
         return False
     
     def set_position(self, x = None, y = None, z = None,
-                           speed = None, relative = False, wait = False):
+                           speed = None, relative = False,
+                           wait = False, timeout = 10):
         '''
         Move arm to the position (x,y,z) unit is mm, speed unit is mm/sec
         
@@ -210,6 +219,8 @@ class SwiftAPI():
             cmd = 'set cmd_sync'
         else:
             cmd = 'set cmd_async'
+        
+        cmd += ' _T%d' % timeout
         
         if relative:
             cmd += ' G2204'
@@ -244,7 +255,8 @@ class SwiftAPI():
         return None
     
     def set_polar(self, s = None, r = None, h = None, 
-                        speed = None, relative = False, wait = False):
+                        speed = None, relative = False,
+                        wait = False, timeout = 10):
         '''
         Polar coordinate, rotation, stretch, height.
         
@@ -263,6 +275,8 @@ class SwiftAPI():
             cmd = 'set cmd_sync'
         else:
             cmd = 'set cmd_async'
+        
+        cmd += ' _T%d' % timeout
         
         if relative:
             cmd += ' G2205'
@@ -296,7 +310,7 @@ class SwiftAPI():
         self._logger.error('get_polar ret: %s' % ret)
         return None
     
-    def set_servo_angle(self, servo_id, angle, wait = False):
+    def set_servo_angle(self, servo_id, angle, wait = False, timeout = 10):
         '''
         Set servo angle, 0 - 180 degrees, this Function will include the manual servo offset.
         
@@ -309,11 +323,12 @@ class SwiftAPI():
             succeed True or failed False
         '''
         cmd = 'set cmd_sync' if wait else 'set cmd_async'
+        cmd += ' _T%d' % timeout
         cmd += ' G2202 N{} V{}'.format(servo_id, angle)
         ret = self._ports['service']['handle'].call(cmd)
         return ret.startswith('ok')
     
-    def set_wrist(self, angle, wait = False):
+    def set_wrist(self, angle, wait = False, timeout = 10):
         '''
         Set swift hand wrist angle. include servo offset.
         
@@ -324,7 +339,7 @@ class SwiftAPI():
         Returns:
             succeed True or failed False
         '''
-        return self.set_servo_angle(SERVO_HAND, angle, wait = wait)
+        return self.set_servo_angle(SERVO_HAND, angle, wait = wait, timeout = timeout)
     
     def get_servo_angle(self, servo_id = None):
         '''
@@ -443,6 +458,76 @@ class SwiftAPI():
         '''
         self.pos_from_dev_cb = callback
     
+    def register_limit_switch_callback(self, callback = None):
+        '''
+        Set function to receiving limit switch state change event.
+        
+        Args:
+            callback: set the callback function, undo by setting to None
+        
+        Returns:
+            None
+        
+        Notes:
+            callback with one argument:
+              True: switch state change to close
+              False: switch state change to open
+        '''
+        self.limit_switch_cb = callback
+    
+    def set_report_keys(self, is_on = True):
+        '''
+        Change default function of base buttons
+        
+        Args:
+            is_on:
+              True: enable report
+              False: disable report, for offline teach by default
+        
+        Returns:
+            True if success
+        '''
+        cmd = 'set cmd_sync M2213 V{}'.format('0' if is_on else '1')
+        ret = self._ports['service']['handle'].call(cmd)
+        if ret == 'ok':
+            return True
+        self._logger.error('set_report_keys ret: %s' % ret)
+        return False
+    
+    def register_key0_callback(self, callback = None):
+        '''
+        Set function to receiving key0 state change event.
+        
+        Args:
+            callback: set the callback function, undo by setting to None
+        
+        Returns:
+            None
+        
+        Notes:
+            callback with one string argument:
+              'short press'
+              'long press'
+        '''
+        self.key0_cb = callback
+    
+    def register_key1_callback(self, callback = None):
+        '''
+        Set function to receiving key1 state change event.
+        
+        Args:
+            callback: set the callback function, undo by setting to None
+        
+        Returns:
+            None
+        
+        Notes:
+            callback with one string argument:
+              'short press'
+              'long press'
+        '''
+        self.key1_cb = callback
+    
     def set_buzzer(self, freq = 1000, time = 200):
         '''
         Control buzzer.
@@ -491,6 +576,21 @@ class SwiftAPI():
             return True
         self._logger.warning('set_gripper ret: %s' % ret)
         return False
+    
+    def get_limit_switch(self):
+        '''
+        Get the limit switch status.
+        
+        Returns:
+            boolean True or False
+        '''
+        ret = self._ports['service']['handle'].call('set cmd_sync P2233')
+        if ret == 'ok V0':
+            return False
+        if ret == 'ok V1':
+            return True
+        self._logger.error('get_limit_switch ret: %s' % ret)
+        return None
     
     def get_analog(self, pin):
         '''

@@ -7,7 +7,7 @@
 # Author: Duke Fong <duke@ufactory.cc>
 
 from ..utils.module_group import ModuleGroup
-from ..comm.serial_ascii import SerialAscii
+from ..comm.cdbus2raw import Cdbus2Raw
 from ..comm.protocol_ascii import ProtocolAscii
 from .swift_body import SwiftBody
 from .gripper import Gripper
@@ -16,20 +16,26 @@ from .keys import Keys
 
 class Swift(ModuleGroup):
     '''\
-    The top module of swift and swift_pro
-    default kwargs: dev_port = None, baud = 115200, filters = {'hwid': 'USB VID:PID=2341:0042'}
+    The top module of swift and swift_pro (via CDBUS2RAW module)
     '''
     
     def __init__(self, ufc, node, iomap, **kwargs):
         
         self.sub_nodes = [
             {
-                'module': SerialAscii,
-                'node': 'serial_ascii',
-                'args': ['dev_port', 'baud', 'filters'],
+                'module': Cdbus2Raw,
+                'node': 'cdbus2raw',
+                'args': ['dev_filter', 'listen_port'],
                 'iomap': {
-                    'out': 'inner: pkt_ser2ptc',
-                    'in':  'inner: pkt_ptc2ser'
+                    'service':      'outer: cdbus2raw',
+                    
+                    'raw_down2up':  'inner: pkt_ser2ptc',
+                    'raw_up2down':  'inner: pkt_ptc2ser',
+                    
+                    'lo_service':   'outer: lo_service',
+                    'RV_socket':    'outer: cdbus2raw_RV',
+                    'RA_socket':    'outer: cdbus2raw_RA',
+                    'SA_listen':    'outer: cdbus2raw_SA'
                 }
             },
             {
@@ -91,14 +97,6 @@ class Swift(ModuleGroup):
             }
         ]
         
-        if 'dev_port' not in kwargs:
-            kwargs['dev_port'] = None
-        if 'baud' not in kwargs:
-            kwargs['baud'] = 115200
-        if 'filters' not in kwargs:
-            kwargs['filters'] = {'hwid': 'USB VID:PID=2341:0042'}
-        if 'cmd_pend_size' not in kwargs:
-            kwargs['cmd_pend_size'] = 2
         super().__init__(ufc, node, iomap, **kwargs)
 
 
