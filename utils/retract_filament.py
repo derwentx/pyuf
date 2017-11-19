@@ -28,16 +28,16 @@ logger_init(logging.DEBUG)
 # logger_init(logging.INFO)
 
 def main():
-    print('setup swift ...')
+    logging.info('setup swift ...')
     swift = SwiftAPI()
     sleep(2)
 
-    print('device info: ')
+    logging.info('device info: ')
     device_info = swift.get_device_info()
-    print(device_info)
-    print('firmware version:')
+    logging.info(device_info)
+    logging.info('firmware version:')
     fw_version = tuple(int(number) for number in device_info[2].split('.'))
-    print(fw_version)
+    logging.info(fw_version)
 
     print('set mode to 3D print: %s' % send_cmd_sync_ok(swift, 'M2400 S2'))
 
